@@ -5,25 +5,32 @@
  */
 package edu.bloomu.codeglosser.Model;
 
+import com.google.common.collect.Lists;
+import edu.bloomu.codeglosser.Utils.Bounds;
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import org.apache.logging.log4j.util.Strings;
 
 /**
  *
  * @author Louis
  */
 public class Note {
+    public static Note DEFAULT = new Note(Strings.EMPTY, "<None Selected>");
+    
     private String msg;
     private String id;
-    private int start;
-    private int end;
+    private List<Bounds> offsets = new ArrayList<>();
     private Color highlightColor;
     private Color textColor;
 
-    public Note(String msg, String id, int start, int end) {
+    public Note(String msg, String id, Bounds ...offsets) {
         this.msg = msg;
         this.id = id;
-        this.start = start;
-        this.end = end;
+        this.offsets.addAll(Lists.newArrayList(offsets));
+        Collections.sort(this.offsets);
         this.highlightColor = Color.YELLOW;
         this.textColor = Color.BLACK;
     }
@@ -44,20 +51,12 @@ public class Note {
         this.id = id;
     }
 
-    public int getStart() {
-        return start;
+    public boolean inRange(Bounds bounds) {
+        return getRange().collidesWith(bounds);
     }
-
-    public void setStart(int start) {
-        this.start = start;
-    }
-
-    public int getEnd() {
-        return end;
-    }
-
-    public void setEnd(int end) {
-        this.end = end;
+    
+    public Bounds getRange() {
+        return Bounds.of(offsets.get(0).getStart(), offsets.get(offsets.size()-1).getEnd());
     }
 
     public Color getHighlightColor() {
@@ -75,11 +74,9 @@ public class Note {
     public void setTextColor(Color textColor) {
         this.textColor = textColor;
     }
-    
-    
 
     @Override
     public String toString() {
-        return "Note{" + "msg=" + msg + ", start=" + start + ", end=" + end + '}';
+        return id;
     }
 }

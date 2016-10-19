@@ -1,14 +1,22 @@
 package edu.bloomu.codeglosser;
 
+import com.google.common.eventbus.EventBus;
 import edu.bloomu.codeglosser.Controller.NoteManager;
+import edu.bloomu.codeglosser.Controller.NotePadController;
+import edu.bloomu.codeglosser.Events.FileChangeEvent;
 import edu.bloomu.codeglosser.Utils.DocumentHelper;
-import edu.bloomu.codeglosser.View.NoteDescriptorPane;
+import edu.bloomu.codeglosser.View.MarkupView;
+import edu.bloomu.codeglosser.View.NotePropertiesView;
+import edu.bloomu.codeglosser.View.NotePadView;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
+import java.io.File;
+import java.net.URL;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
+import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.Document;
 import org.openide.windows.TopComponent;
 
@@ -23,28 +31,22 @@ import org.openide.windows.TopComponent;
 )
 @TopComponent.Registration(mode = "glossEditor", openAtStartup = false)
 public class GlossableTopComponent extends TopComponent {
+    
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(GlossableTopComponent.class.getName());
 
-    private final GlossableTextArea gTextArea;
-    private final NoteDescriptorPane nDescrPane;
     private static final char SYM = '\u2691'; // flag
+    private final EventBus bus = new EventBus();
+    
 
     public GlossableTopComponent(Document doc) {
-        nDescrPane = new NoteDescriptorPane();
+        doc.putProperty(DefaultEditorKit.EndOfLineStringProperty, "\r\n");
         setDisplayName(DocumentHelper.getDocumentName(doc) + ".html");
-        setLayout(new BorderLayout());        
-        gTextArea = new GlossableTextArea(doc);
-        JScrollPane scrollPane = new JScrollPane(gTextArea);
-        JScrollPane spane = new JScrollPane(nDescrPane);
-        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane, spane);
-        split.setOneTouchExpandable(true);
-        split.setDividerLocation(.5);
-        split.setResizeWeight(.5);
-        add(split, BorderLayout.CENTER);
-        // Initialize NoteManager...
-        NoteManager.setNoteView(nDescrPane);
-        NoteManager.setNotepadView(gTextArea);
-        NoteManager manager = NoteManager.getInstance(DocumentHelper.getDocumentName(doc));
-        gTextArea.setController(manager);
-        nDescrPane.setController(manager);
+        setLayout(new BorderLayout());      
+        MarkupView v = new MarkupView();
+        add(v, BorderLayout.CENTER);
+        NoteManager.getInstance(DocumentHelper.getDocumentName(doc));
+        v.setDocument(doc);
+        v.setEventBus(bus);
+        bus.post(FileChangeEvent.of(DocumentHelper.getDocumentName(doc)));
     }
 }
